@@ -10,11 +10,17 @@
     .category input, .category textarea { width: 100%; padding: 10px; margin-bottom: 10px; }
     .button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
     .button:hover { background-color: #45a049; }
+    .saveButton { background-color: #007bff; }
+    .saveButton:hover { background-color: #0056b3; }
+    .deleteButton { background-color: #dc3545; }
+    .deleteButton:hover { background-color: #c82333; }
   </style>
 </head>
 <body>
 
 <h1>메모장 프로그램</h1>
+
+<!-- 제목과 커트번호 입력 -->
 <form id="cutForm">
   <label for="title">제목:</label>
   <input type="text" id="title" placeholder="제목을 입력하세요">
@@ -25,9 +31,15 @@
   <button type="button" class="button" onclick="createCategories()">하위 카테고리 생성</button>
 </form>
 
+<!-- 하위 카테고리 메모 입력 -->
 <div id="categories"></div>
 
+<!-- 저장된 메모 검색 -->
+<h2>저장된 메모</h2>
+<ul id="savedMemoList"></ul>
+
 <script>
+  // 커트번호에 맞는 카테고리 생성
   function createCategories() {
     const title = document.getElementById("title").value;
     const cutNumber = document.getElementById("cutNumber").value;
@@ -53,7 +65,89 @@
       
       categoriesDiv.appendChild(categoryDiv);
     });
+    
+    // 저장 버튼 추가
+    let saveButton = document.createElement("button");
+    saveButton.textContent = "저장";
+    saveButton.classList.add("button", "saveButton");
+    saveButton.onclick = function() {
+      saveMemo(title, cutNumber, categories);
+    };
+    categoriesDiv.appendChild(saveButton);
   }
+
+  // 메모 저장
+  function saveMemo(title, cutNumber, categories) {
+    const memoData = {};
+    categories.forEach(category => {
+      const textarea = document.querySelector(`textarea[placeholder="메모를 입력하세요: ${category}"]`);
+      memoData[category] = textarea.value;
+    });
+
+    const savedMemos = JSON.parse(localStorage.getItem("savedMemos")) || [];
+    savedMemos.push({ title, cutNumber, memoData });
+
+    localStorage.setItem("savedMemos", JSON.stringify(savedMemos));
+
+    alert("메모가 저장되었습니다!");
+    loadSavedMemos();  // 저장된 메모 리스트 새로 고침
+  }
+
+  // 저장된 메모 불러오기
+  function loadSavedMemos() {
+    const savedMemos = JSON.parse(localStorage.getItem("savedMemos")) || [];
+    const savedMemoList = document.getElementById("savedMemoList");
+    savedMemoList.innerHTML = "";  // 기존 리스트 초기화
+
+    savedMemos.forEach((memo, index) => {
+      let listItem = document.createElement("li");
+      listItem.innerHTML = `<strong>${memo.title} - 커트번호 ${memo.cutNumber}</strong> 
+                            <button onclick="viewMemo(${index})">보기</button>
+                            <button class="deleteButton" onclick="deleteMemo(${index})">삭제</button>`;
+      savedMemoList.appendChild(listItem);
+    });
+  }
+
+  // 메모 보기
+  function viewMemo(index) {
+    const savedMemos = JSON.parse(localStorage.getItem("savedMemos"));
+    const memo = savedMemos[index];
+    let categoriesDiv = document.getElementById("categories");
+    categoriesDiv.innerHTML = `<h2>${memo.title} - 커트번호 ${memo.cutNumber}</h2>`;
+    
+    Object.keys(memo.memoData).forEach(category => {
+      let categoryDiv = document.createElement("div");
+      categoryDiv.classList.add("category");
+      
+      let categoryLabel = document.createElement("label");
+      categoryLabel.textContent = category;
+      
+      let categoryTextarea = document.createElement("textarea");
+      categoryTextarea.value = memo.memoData[category];
+      categoryTextarea.readOnly = true;  // 수정 불가로 설정
+      
+      categoryDiv.appendChild(categoryLabel);
+      categoryDiv.appendChild(categoryTextarea);
+      
+      categoriesDiv.appendChild(categoryDiv);
+    });
+  }
+
+  // 메모 삭제
+  function deleteMemo(index) {
+    const savedMemos = JSON.parse(localStorage.getItem("savedMemos"));
+    savedMemos.splice(index, 1);  // 해당 메모 삭제
+
+    localStorage.setItem("savedMemos", JSON.stringify(savedMemos));
+
+    alert("메모가 삭제되었습니다!");
+    loadSavedMemos();  // 저장된 메모 리스트 새로 고침
+  }
+
+  // 페이지 로드 시 저장된 메모 불러오기
+  window.onload = function() {
+    loadSavedMemos();
+  };
 </script>
 
 </body>
