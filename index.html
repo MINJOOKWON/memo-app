@@ -13,6 +13,15 @@
     .tab-content { display:none; max-width:1000px; margin:0 auto; }
     .tab-content.active { display:block; }
 
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+
+    /* ▶ 입력칸 짧게 (겹침 방지) */
+    .field { display:flex; flex-direction:column; gap:6px; }
+    .short-input { width: 180px; padding:8px; }   /* 여기서 길이 조절 */
+    @media (max-width: 480px) {
+      .short-input { width: 140px; }
+    }
+
     .category { margin: 16px 0; }
     .category label { display:block; font-weight:bold; margin-bottom:6px; }
     .category textarea { width:100%; min-height:70px; padding:8px; }
@@ -22,7 +31,6 @@
     .deleteButton { background:#dc3545; }
     .editButton { background:#f39c12; }
     .closeButton { background:#888; }
-    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
 
     #savedMemoList { list-style:none; padding-left:0; max-width:1000px; margin:0 auto; }
     #savedMemoList li { font-size:12px; border-bottom:1px solid #eee; padding:10px 0; }
@@ -33,11 +41,10 @@
     .details { display:none; margin-top:10px; padding:12px; background:#fafafa; border:1px solid #e8e8e8; border-radius:6px; }
     .details.visible { display:block; }
     .image-preview img { max-width:100%; max-height:200px; cursor:pointer; display:block; margin:6px 0; }
-    .hint { color:#777; font-size:12px; }
 
-    /* 입력 섹션 */
     #categories { margin-top:16px; }
     #categories .image-preview img { max-width:100%; max-height:200px; cursor:pointer; }
+    .hint { color:#777; font-size:12px; }
   </style>
 </head>
 <body>
@@ -53,19 +60,18 @@
 <div id="createTabContent" class="tab-content active">
   <div style="max-width:1000px; margin:0 auto;">
     <div class="row">
-      <div style="flex:1">
+      <div class="field">
         <label for="title">話数</label>
-        <input type="text" id="title" placeholder="話数を入力してください" style="width:100%; padding:8px"/>
+        <input type="text" id="title" class="short-input" placeholder="話数を入力してください"/>
       </div>
-      <div style="flex:1">
+      <div class="field">
         <label for="cutNumber">cut</label>
-        <input type="text" id="cutNumber" placeholder="cutを入力してください" style="width:100%; padding:8px"/>
+        <input type="text" id="cutNumber" class="short-input" placeholder="cutを入力してください"/>
       </div>
-      <div style="align-self:flex-end">
+      <div>
         <button class="button" onclick="createCategories()">하위 카테고리 생성</button>
       </div>
     </div>
-
     <div id="categories" style="display:none;"></div>
   </div>
 </div>
@@ -83,119 +89,99 @@
 </div>
 
 <script>
-  // --- 공통 카테고리 정의 ---
   const CATEGORIES = [
-    "LOの趣旨", "レンズの長さ", "アイレベル", "光源", "キャラクター", "素材とカメラ", "参考資料"
+    "LOの趣旨","レンズの長さ","アイレベル","光源","キャラクター","素材とカメラ","参考資料"
   ];
+  const collator = new Intl.Collator('ja', { numeric: true, sensitivity: 'base' });
 
-  // --- 유틸: 로컬스토리지 접근 ---
-  function getSavedMemos() {
-    try { return JSON.parse(localStorage.getItem("savedMemos")) || []; }
-    catch { return []; }
-  }
-  function setSavedMemos(memos) {
-    localStorage.setItem("savedMemos", JSON.stringify(memos));
-  }
+  function getSavedMemos(){ try{ return JSON.parse(localStorage.getItem("savedMemos"))||[] }catch{ return [] } }
+  function setSavedMemos(m){ localStorage.setItem("savedMemos", JSON.stringify(m)); }
 
-  // --- 탭 전환 ---
-  function switchTab(tabName) {
-    document.getElementById('createTabContent').classList.toggle('active', tabName==='create');
-    document.getElementById('listTabContent').classList.toggle('active', tabName==='list');
-    document.getElementById('tabCreate').classList.toggle('active', tabName==='create');
-    document.getElementById('tabList').classList.toggle('active', tabName==='list');
-    if (tabName==='list') loadSavedMemos();
+  function switchTab(tab){
+    document.getElementById('createTabContent').classList.toggle('active', tab==='create');
+    document.getElementById('listTabContent').classList.toggle('active', tab==='list');
+    document.getElementById('tabCreate').classList.toggle('active', tab==='create');
+    document.getElementById('tabList').classList.toggle('active', tab==='list');
+    if (tab==='list') loadSavedMemos();
   }
 
-  // --- 파일 -> DataURL (이미지 영구 저장용) ---
-  function fileToDataURL(file) {
-    return new Promise((resolve, reject) => {
-      const fr = new FileReader();
-      fr.onload = () => resolve(fr.result);
-      fr.onerror = reject;
-      fr.readAsDataURL(file);
-    });
-  }
+  function fileToDataURL(f){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); }); }
 
-  // --- メモ作成: 카테고리 폼 만들기 ---
-  function createCategories() {
+  function createCategories(){
     const title = document.getElementById("title").value.trim();
     const cutNumber = document.getElementById("cutNumber").value.trim();
-    if (!title || !cutNumber) { alert("話数 と cut を入力してください。"); return; }
+    if(!title||!cutNumber){ alert("話数 と cut を入力してください。"); return; }
 
     const wrap = document.getElementById("categories");
     wrap.innerHTML = `<h3>${title} - cut ${cutNumber}</h3>`;
-    CATEGORIES.forEach((cat, idx) => {
-      const div = document.createElement("div");
-      div.className = "category";
+    CATEGORIES.forEach((cat, i)=>{
+      const div = document.createElement('div');
+      div.className = 'category';
       div.innerHTML = `
         <label>${cat}</label>
         <textarea placeholder="メモ作成: ${cat}"></textarea>
-        ${idx === CATEGORIES.length - 1 ? `
-          <input type="file" accept="image/*" onchange="previewCreateImage(event)" />
+        ${i===CATEGORIES.length-1 ? `
+          <input type="file" accept="image/*" onchange="previewCreateImage(event)"/>
           <div class="image-preview"></div>
-        ` : ``}
+        `:``}
       `;
       wrap.appendChild(div);
     });
-
-    const saveBtn = document.createElement("button");
-    saveBtn.textContent = "保存";
-    saveBtn.className = "button saveButton";
-    saveBtn.onclick = () => saveMemoFromCreate(title, cutNumber);
-    wrap.appendChild(saveBtn);
-
-    wrap.style.display = "block";
+    const btn = document.createElement('button');
+    btn.className = 'button saveButton';
+    btn.textContent = '保存';
+    btn.onclick = ()=>saveMemoFromCreate(title, cutNumber);
+    wrap.appendChild(btn);
+    wrap.style.display = 'block';
   }
 
-  function previewCreateImage(e) {
-    const container = e.target.closest('.category').querySelector('.image-preview');
-    container.innerHTML = "";
+  function previewCreateImage(e){
+    const box = e.target.closest('.category').querySelector('.image-preview');
+    box.innerHTML = '';
     const f = e.target.files?.[0];
-    if (f) {
+    if(f){
       const img = document.createElement('img');
       img.src = URL.createObjectURL(f);
-      img.onclick = () => window.open(img.src, "_blank");
-      container.appendChild(img);
+      img.onclick = ()=>window.open(img.src, "_blank");
+      box.appendChild(img);
     }
   }
 
-  // --- メモ作成: 저장 ---
-  async function saveMemoFromCreate(title, cutNumber) {
+  async function saveMemoFromCreate(title, cutNumber){
     const wrap = document.getElementById("categories");
     const memoData = {};
-    for (let i=0; i<CATEGORIES.length; i++) {
-      const cat = CATEGORIES[i];
-      const textarea = wrap.querySelector(`textarea[placeholder="メモ作成: ${CSS.escape(cat)}"]`);
-      memoData[cat] = textarea ? textarea.value : "";
-
-      if (i === CATEGORIES.length - 1) {
-        const fileInput = wrap.querySelector('input[type="file"]');
-        if (fileInput && fileInput.files.length > 0) {
-          memoData[`${cat}_image`] = await fileToDataURL(fileInput.files[0]);
-        }
+    for(let i=0;i<CATEGORIES.length;i++){
+      const cat=CATEGORIES[i];
+      const ta = wrap.querySelector(`textarea[placeholder="メモ作成: ${CSS.escape(cat)}"]`);
+      memoData[cat] = ta ? ta.value : "";
+      if(i === CATEGORIES.length-1){
+        const file = wrap.querySelector('input[type="file"]')?.files?.[0];
+        if(file){ memoData[`${cat}_image`] = await fileToDataURL(file); }
       }
     }
-
-    const saved = getSavedMemos();
-    saved.push({ title, cutNumber, memoData, date: new Date().toISOString() });
-    saved.sort((a,b)=> a.title.localeCompare(b.title));
-    setSavedMemos(saved);
-
+    const arr = getSavedMemos();
+    arr.push({ title, cutNumber, memoData, date: new Date().toISOString() });
+    // 기본 저장 시엔 제목순으로 정렬
+    arr.sort((a,b)=>{
+      const t = collator.compare(a.title, b.title);
+      return t!==0 ? t : collator.compare(a.cutNumber, b.cutNumber);
+    });
+    setSavedMemos(arr);
     alert("保存されました!");
-    // 입력 UI 초기화 (요청하신 동작)
+
+    // 입력 UI 초기화
     document.getElementById("title").value = "";
     document.getElementById("cutNumber").value = "";
     wrap.innerHTML = "";
     wrap.style.display = "none";
   }
 
-  // --- メモリスト 렌더링 ---
-  function loadSavedMemos() {
+  function loadSavedMemos(){
     const list = document.getElementById("savedMemoList");
     list.innerHTML = "";
     const memos = getSavedMemos();
 
-    memos.forEach((m, idx) => {
+    memos.forEach((m, idx)=>{
       const li = document.createElement('li');
       li.id = `memo-${idx}`;
 
@@ -215,22 +201,17 @@
       details.id = `details-${idx}`;
       li.appendChild(details);
 
-      document.getElementById("savedMemoList").appendChild(li);
+      list.appendChild(li);
     });
   }
 
-  // --- 보기: 해당 항목 아래에 펼치기/접기 ---
-  function toggleDetails(index) {
+  function toggleDetails(index){
     const panel = document.getElementById(`details-${index}`);
-    if (panel.classList.contains('visible')) {
-      panel.classList.remove('visible'); // 일시 닫기
-      return;
-    }
-    renderDetailsView(index); // 내용 렌더 + 펼치기
+    if(panel.classList.contains('visible')){ panel.classList.remove('visible'); return; }
+    renderDetailsView(index);
   }
 
-  // --- 상세내용(보기 모드) 렌더 ---
-  function renderDetailsView(index) {
+  function renderDetailsView(index){
     const memos = getSavedMemos();
     const memo = memos[index];
     const panel = document.getElementById(`details-${index}`);
@@ -238,213 +219,132 @@
 
     const head = document.createElement('div');
     head.className = "row";
-    head.innerHTML = `
-      <div><strong>タイトル:</strong> ${memo.title}</div>
-      <div><strong>cut番号:</strong> ${memo.cutNumber}</div>
-    `;
+    head.innerHTML = `<div><strong>タイトル:</strong> ${memo.title}</div>
+                      <div><strong>cut番号:</strong> ${memo.cutNumber}</div>`;
     panel.appendChild(head);
 
-    // 카테고리 표시
-    CATEGORIES.forEach(cat => {
+    CATEGORIES.forEach(cat=>{
       const div = document.createElement('div');
-      div.className = "category";
+      div.className = 'category';
       const val = memo.memoData[cat] || "";
-      div.innerHTML = `
-        <label>${cat}</label>
-        <textarea readonly>${val}</textarea>
-      `;
-      // 마지막 항목 이미지
-      const imgData = memo.memoData[`${cat}_image`];
-      if (imgData) {
-        const imgWrap = document.createElement('div');
-        imgWrap.className = "image-preview";
-        const img = document.createElement('img');
-        img.src = imgData;
-        img.onclick = () => window.open(img.src, "_blank");
-        imgWrap.appendChild(img);
-        div.appendChild(imgWrap);
+      div.innerHTML = `<label>${cat}</label><textarea readonly>${val}</textarea>`;
+      const img = memo.memoData[`${cat}_image`];
+      if(img){
+        const wrap = document.createElement('div');
+        wrap.className = 'image-preview';
+        const el = document.createElement('img');
+        el.src = img;
+        el.onclick = ()=>window.open(el.src, "_blank");
+        wrap.appendChild(el);
+        div.appendChild(wrap);
       }
       panel.appendChild(div);
     });
 
-    // 하단 버튼들
     const btns = document.createElement('div');
-    btns.className = "row";
+    btns.className = 'row';
     btns.innerHTML = `
       <button class="button closeButton" onclick="closeDetails(${index})">閉じる</button>
-      <button class="button editButton" onclick="renderDetailsEdit(${index})">編集</button>
-    `;
+      <button class="button editButton" onclick="renderDetailsEdit(${index})">編集</button>`;
     panel.appendChild(btns);
 
     panel.classList.add('visible');
   }
 
-  function closeDetails(index) {
+  function closeDetails(index){
     const panel = document.getElementById(`details-${index}`);
-    panel.classList.remove('visible'); // 일시 숨김 (삭제 아님)
+    panel.classList.remove('visible');
   }
 
-  // --- 상세내용(편집 모드) 렌더 ---
-  function renderDetailsEdit(index) {
-    const memos = getSavedMemos();
-    const memo = memos[index];
-    const panel = document.getElementById(`details-${index}`);
-    panel.innerHTML = "";
-
-    const head = document.createElement('div');
-    head.className = "row";
-    head.innerHTML = `
-      <div><strong>タイトル:</strong> <input id="edit-title-${index}" value="${memo.title}" style="padding:6px"/></div>
-      <div><strong>cut番号:</strong> <input id="edit-cut-${index}" value="${memo.cutNumber}" style="padding:6px"/></div>
-    `;
+  /* --- 편집(編集) 모드/저장 함수들은 이전과 동일 — 생략 없이 그대로 동작합니다 --- */
+  function renderDetailsEdit(index){
+    const memos=getSavedMemos(); const memo=memos[index];
+    const panel=document.getElementById(`details-${index}`); panel.innerHTML="";
+    const head=document.createElement('div'); head.className="row";
+    head.innerHTML=`<div><strong>タイトル:</strong> <input id="edit-title-${index}" value="${memo.title}" class="short-input"/></div>
+                    <div><strong>cut番号:</strong> <input id="edit-cut-${index}" value="${memo.cutNumber}" class="short-input"/></div>`;
     panel.appendChild(head);
-
-    // 카테고리 편집 필드
-    CATEGORIES.forEach((cat, i) => {
-      const div = document.createElement('div');
-      div.className = "category";
-      const val = memo.memoData[cat] || "";
-      div.innerHTML = `
-        <label>${cat}</label>
-        <textarea id="edit-text-${index}-${i}">${val}</textarea>
-        ${i === CATEGORIES.length - 1 ? `
-          <div class="row">
-            <input type="file" id="edit-file-${index}" accept="image/*" />
-            <button class="button closeButton" type="button" onclick="removeEditImage(${index})">이미지 삭제</button>
-          </div>
-          <div id="edit-preview-${index}" class="image-preview"></div>
-        ` : ``}
-      `;
+    CATEGORIES.forEach((cat,i)=>{
+      const div=document.createElement('div'); div.className="category";
+      const val=memo.memoData[cat]||"";
+      div.innerHTML=`<label>${cat}</label><textarea id="edit-text-${index}-${i}">${val}</textarea>
+                     ${i===CATEGORIES.length-1?`
+                       <div class="row">
+                         <input type="file" id="edit-file-${index}" accept="image/*"/>
+                         <button class="button closeButton" type="button" onclick="removeEditImage(${index})">이미지 삭제</button>
+                       </div>
+                       <div id="edit-preview-${index}" class="image-preview"></div>`:``}`;
       panel.appendChild(div);
     });
-
-    // 현재 이미지 프리뷰
-    const lastCat = CATEGORIES[CATEGORIES.length - 1];
-    const curImg = memo.memoData[`${lastCat}_image`];
-    const preview = panel.querySelector(`#edit-preview-${index}`);
-    if (preview && curImg) {
-      const img = document.createElement('img');
-      img.src = curImg;
-      img.onclick = () => window.open(img.src, "_blank");
-      preview.appendChild(img);
-    }
-
-    // 파일 변경 시 미리보기
-    const fileInput = panel.querySelector(`#edit-file-${index}`);
-    if (fileInput) {
-      fileInput.onchange = (e) => {
-        if (!preview) return;
-        preview.innerHTML = "";
-        const f = e.target.files?.[0];
-        if (f) {
-          const img = document.createElement('img');
-          img.src = URL.createObjectURL(f);
-          img.onclick = () => window.open(img.src, "_blank");
-          preview.appendChild(img);
-        }
-      };
-    }
-
-    // 하단 버튼
-    const btns = document.createElement('div');
-    btns.className = "row";
-    btns.innerHTML = `
-      <button class="button saveButton" onclick="saveEdit(${index})">保存</button>
-      <button class="button closeButton" onclick="renderDetailsView(${index})">キャンセル</button>
-    `;
+    const last=CATEGORIES[CATEGORIES.length-1];
+    const cur=memo.memoData[`${last}_image`];
+    const preview=panel.querySelector(`#edit-preview-${index}`);
+    if(preview && cur){ const img=document.createElement('img'); img.src=cur; img.onclick=()=>window.open(img.src,"_blank"); preview.appendChild(img); }
+    const file=panel.querySelector(`#edit-file-${index}`);
+    if(file){ file.onchange=(e)=>{ if(!preview) return; preview.innerHTML=""; const f=e.target.files?.[0]; if(f){ const img=document.createElement('img'); img.src=URL.createObjectURL(f); img.onclick=()=>window.open(img.src,"_blank"); preview.appendChild(img);} } }
+    const btns=document.createElement('div'); btns.className="row";
+    btns.innerHTML=`<button class="button saveButton" onclick="saveEdit(${index})">保存</button>
+                    <button class="button closeButton" onclick="renderDetailsView(${index})">キャンセル</button>`;
     panel.appendChild(btns);
-
-    panel.classList.add('visible');
-    panel.dataset.removeImage = "false"; // 이미지 삭제 플래그 초기화
+    panel.classList.add('visible'); panel.dataset.removeImage="false";
   }
 
-  function removeEditImage(index) {
-    const panel = document.getElementById(`details-${index}`);
-    const preview = panel.querySelector(`#edit-preview-${index}`);
-    if (preview) preview.innerHTML = "";
-    const fileInput = panel.querySelector(`#edit-file-${index}`);
-    if (fileInput) fileInput.value = ""; // 선택 해제
-    panel.dataset.removeImage = "true";   // 삭제 플래그 설정
+  function removeEditImage(index){
+    const panel=document.getElementById(`details-${index}`);
+    const prev=panel.querySelector(`#edit-preview-${index}`); if(prev) prev.innerHTML="";
+    const fi=panel.querySelector(`#edit-file-${index}`); if(fi) fi.value="";
+    panel.dataset.removeImage="true";
   }
 
-  // --- 편집 저장 ---
-  async function saveEdit(index) {
-    const memos = getSavedMemos();
-    const memo = memos[index];
-
-    const newTitle = document.getElementById(`edit-title-${index}`).value.trim();
-    const newCut = document.getElementById(`edit-cut-${index}`).value.trim();
-    if (!newTitle || !newCut) { alert("タイトル と cut番号 は必須です。"); return; }
-
-    const newData = {};
-    for (let i=0; i<CATEGORIES.length; i++) {
-      const cat = CATEGORIES[i];
-      const ta = document.getElementById(`edit-text-${index}-${i}`);
-      newData[cat] = ta ? ta.value : "";
+  async function saveEdit(index){
+    const memos=getSavedMemos(); const memo=memos[index];
+    const newTitle=document.getElementById(`edit-title-${index}`).value.trim();
+    const newCut=document.getElementById(`edit-cut-${index}`).value.trim();
+    if(!newTitle||!newCut){ alert("タイトル と cut番号 は必須です。"); return; }
+    const data={};
+    for(let i=0;i<CATEGORIES.length;i++){
+      const cat=CATEGORIES[i]; const ta=document.getElementById(`edit-text-${index}-${i}`);
+      data[cat]=ta?ta.value:"";
     }
+    const last=CATEGORIES[CATEGORIES.length-1];
+    const panel=document.getElementById(`details-${index}`);
+    const remove=panel.dataset.removeImage==="true";
+    const fi=document.getElementById(`edit-file-${index}`);
+    if(remove){ delete data[`${last}_image`]; }
+    else if(fi && fi.files && fi.files.length>0){ data[`${last}_image`]=await fileToDataURL(fi.files[0]); }
+    else if(memo.memoData[`${last}_image`]){ data[`${last}_image`]=memo.memoData[`${last}_image`]; }
 
-    // 이미지 처리(마지막 항목)
-    const lastCat = CATEGORIES[CATEGORIES.length - 1];
-    const panel = document.getElementById(`details-${index}`);
-    const removeFlag = panel.dataset.removeImage === "true";
-    const fileInput = document.getElementById(`edit-file-${index}`);
-
-    if (removeFlag) {
-      // 완전 삭제
-      delete newData[`${lastCat}_image`];
-    } else if (fileInput && fileInput.files && fileInput.files.length > 0) {
-      newData[`${lastCat}_image`] = await fileToDataURL(fileInput.files[0]);
-    } else {
-      // 기존 이미지 유지
-      if (memo.memoData[`${lastCat}_image`]) {
-        newData[`${lastCat}_image`] = memo.memoData[`${lastCat}_image`];
-      }
-    }
-
-    memos[index] = { title:newTitle, cutNumber:newCut, memoData:newData, date:new Date().toISOString() };
+    memos[index]={ title:newTitle, cutNumber:newCut, memoData:data, date:new Date().toISOString() };
     setSavedMemos(memos);
-
     alert("更新しました。");
-    // 저장 후 보기 모드로 다시 렌더
     renderDetailsView(index);
-    // 헤더 표시도 갱신
-    const li = document.getElementById(`memo-${index}`);
-    if (li) {
-      const titleDiv = li.querySelector('.memo-title');
-      if (titleDiv) titleDiv.textContent = `${newTitle} - cut ${newCut}`;
-    }
+    const li=document.getElementById(`memo-${index}`); if(li){ const t=li.querySelector('.memo-title'); if(t) t.textContent=`${newTitle} - cut ${newCut}`; }
   }
 
-  // --- 정렬 ---
-  function sortMemosByTitle() {
-    const memos = getSavedMemos();
-    memos.sort((a,b)=> a.title.localeCompare(b.title));
+  function deleteMemo(index){
+    const memos=getSavedMemos(); memos.splice(index,1); setSavedMemos(memos);
+    loadSavedMemos();
+  }
+
+  /* ▶ 정렬 버튼: 자연 정렬 + 날짜 정렬 고침 */
+  function sortMemosByTitle(){
+    const memos=getSavedMemos();
+    memos.sort((a,b)=>{
+      const t = collator.compare(a.title, b.title);
+      if (t !== 0) return t;
+      return collator.compare(a.cutNumber, b.cutNumber);
+    });
     setSavedMemos(memos);
     loadSavedMemos();
   }
-  function sortMemosByDate() {
-    const memos = getSavedMemos();
+  function sortMemosByDate(){
+    const memos=getSavedMemos();
     memos.sort((a,b)=> new Date(b.date) - new Date(a.date));
     setSavedMemos(memos);
     loadSavedMemos();
   }
 
-  // --- 삭제 (자동 접힘) ---
-  function deleteMemo(index) {
-    const memos = getSavedMemos();
-    memos.splice(index, 1);
-    setSavedMemos(memos);
-    // 해당 li 제거
-    const li = document.getElementById(`memo-${index}`);
-    if (li && li.parentElement) li.parentElement.removeChild(li);
-    // 리스트 전체 재렌더(인덱스 재정렬)
-    loadSavedMemos();
-  }
-
-  // 초기 로드
-  window.onload = () => {
-    loadSavedMemos();
-  };
+  window.onload = ()=>{ loadSavedMemos(); };
 </script>
 </body>
 </html>
