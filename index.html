@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>메모장 프로그램</title>
+  <title>メモ帳</title>
   <style>
     body { font-family: Arial, sans-serif; }
     .category { margin: 20px 0; }
@@ -20,24 +20,24 @@
 </head>
 <body>
 
-<h1>메모장 프로그램</h1>
+<h1>メモ帳</h1>
 
-<!-- 제목과 커트번호 입력 -->
+<!-- タイトル話数とcut番号 -->
 <form id="cutForm">
-  <label for="title">제목:</label>
-  <input type="text" id="title" placeholder="話数">
+  <label for="title">話数:</label>
+  <input type="text" id="title" placeholder="タイトルと話数を入力してください">
   
-  <label for="cutNumber">커트 번호:</label>
-  <input type="text" id="cutNumber" placeholder="커트 번호를 입력하세요">
+  <label for="cutNumber">cut:</label>
+  <input type="text" id="cutNumber" placeholder="cut番号を入力して下さい">
   
-  <button type="button" class="button" onclick="createCategories()">하위 카테고리 생성</button>
+  <button type="button" class="button" onclick="createCategories()">メモ生成</button>
 </form>
 
-<!-- 하위 카테고리 메모 입력 -->
+<!-- Cut内容入力 -->
 <div id="categories"></div>
 
-<!-- 저장된 메모 검색 -->
-<h2>저장된 메모</h2>
+<!-- 検索 -->
+<h2>メモリスト</h2>
 <ul id="savedMemoList"></ul>
 
 <script>
@@ -46,13 +46,13 @@
     const title = document.getElementById("title").value;
     const cutNumber = document.getElementById("cutNumber").value;
     const categories = [
-      "레이아웃의 취지", "렌즈의 길이", "아이레벨", "광원", "캐릭터", "소재의 구성", "카메라워크"
+      "LOの趣旨", "レンズの長さ", "アイレベル", "光源", "キャラクター", "素材とカメラ", "参考資料"
     ];
     
     let categoriesDiv = document.getElementById("categories");
-    categoriesDiv.innerHTML = `<h2>${title} - 커트번호 ${cutNumber}</h2>`;
+    categoriesDiv.innerHTML = `<h2>${title} - cut番号 ${cutNumber}</h2>`;
     
-    categories.forEach(category => {
+    categories.forEach((category, index) => {
       let categoryDiv = document.createElement("div");
       categoryDiv.classList.add("category");
       
@@ -60,30 +60,35 @@
       categoryLabel.textContent = category;
       
       let categoryTextarea = document.createElement("textarea");
-      categoryTextarea.placeholder = `메모를 입력하세요: ${category}`;
+      categoryTextarea.placeholder = `メモを入力してください: ${category}`;
       
-      // 이미지 첨부 입력 필드 추가
-      let imageInput = document.createElement("input");
-      imageInput.type = "file";
-      imageInput.accept = "image/*";
-      imageInput.addEventListener("change", function(event) {
-        previewImage(event, category);
-      });
+      // 이미지 첨부 입력 필드 추가 (마지막 항목에만)
+      let imageInput = null;
+      if (index === categories.length - 1) {
+        imageInput = document.createElement("input");
+        imageInput.type = "file";
+        imageInput.accept = "image/*";
+        imageInput.addEventListener("change", function(event) {
+          previewImage(event, category);
+        });
+      }
       
       let imagePreviewDiv = document.createElement("div");
       imagePreviewDiv.classList.add("image-preview");
       
       categoryDiv.appendChild(categoryLabel);
       categoryDiv.appendChild(categoryTextarea);
-      categoryDiv.appendChild(imageInput);
-      categoryDiv.appendChild(imagePreviewDiv);  // 이미지 미리보기 공간 추가
+      if (imageInput) {
+        categoryDiv.appendChild(imageInput);
+        categoryDiv.appendChild(imagePreviewDiv);  // 이미지 미리보기 공간 추가
+      }
       
       categoriesDiv.appendChild(categoryDiv);
     });
     
     // 저장 버튼 추가
     let saveButton = document.createElement("button");
-    saveButton.textContent = "저장";
+    saveButton.textContent = "保存";
     saveButton.classList.add("button", "saveButton");
     saveButton.onclick = function() {
       saveMemo(title, cutNumber, categories);
@@ -107,23 +112,28 @@
   // 메모 저장
   function saveMemo(title, cutNumber, categories) {
     const memoData = {};
-    categories.forEach(category => {
-      const textarea = document.querySelector(`textarea[placeholder="메모를 입력하세요: ${category}"]`);
+    categories.forEach((category, index) => {
+      const textarea = document.querySelector(`textarea[placeholder="メモを入力してください: ${category}"]`);
       memoData[category] = textarea.value;
 
-      // 이미지 파일 데이터 가져오기
-      const imageInput = document.querySelector(`input[type="file"]`);
-      if (imageInput && imageInput.files.length > 0) {
-        memoData[`${category}_image`] = URL.createObjectURL(imageInput.files[0]);
+      // 이미지 파일 데이터 가져오기 (마지막 항목에만)
+      if (index === categories.length - 1) {
+        const imageInput = document.querySelector(`input[type="file"]`);
+        if (imageInput && imageInput.files.length > 0) {
+          memoData[`${category}_image`] = URL.createObjectURL(imageInput.files[0]);
+        }
       }
     });
 
     const savedMemos = JSON.parse(localStorage.getItem("savedMemos")) || [];
     savedMemos.push({ title, cutNumber, memoData });
 
+    // 제목 순으로 정렬하여 저장
+    savedMemos.sort((a, b) => a.title.localeCompare(b.title));
+
     localStorage.setItem("savedMemos", JSON.stringify(savedMemos));
 
-    alert("메모가 저장되었습니다!");
+    alert("保存されました!");
     loadSavedMemos();  // 저장된 메모 리스트 새로 고침
   }
 
@@ -147,12 +157,9 @@
     const savedMemos = JSON.parse(localStorage.getItem("savedMemos"));
     const memo = savedMemos[index];
     let categoriesDiv = document.getElementById("categories");
-    categoriesDiv.innerHTML = `<h2>${memo.title} - 커트번호 ${memo.cutNumber}</h2>`;
+    categoriesDiv.innerHTML = `<h2>${memo.title} - カット番号 ${memo.cutNumber}</h2>`;
     
     Object.keys(memo.memoData).forEach(category => {
-      if (category.includes("_image")) {
-        return; // 이미지 파일은 제외하고 진행
-      }
       let categoryDiv = document.createElement("div");
       categoryDiv.classList.add("category");
       
@@ -166,7 +173,7 @@
       categoryDiv.appendChild(categoryLabel);
       categoryDiv.appendChild(categoryTextarea);
 
-      // 이미지 미리보기
+      // 이미지 미리보기 (마지막 항목에만)
       if (memo.memoData[`${category}_image`]) {
         let imageDiv = document.createElement("div");
         let img = document.createElement("img");
@@ -186,7 +193,7 @@
 
     localStorage.setItem("savedMemos", JSON.stringify(savedMemos));
 
-    alert("메모가 삭제되었습니다!");
+    alert("削除されました!");
     loadSavedMemos();  // 저장된 메모 리스트 새로 고침
   }
 
