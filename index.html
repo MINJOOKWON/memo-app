@@ -243,6 +243,53 @@
     });
   }
 
+  // 메모 보기
+  function viewMemo(index) {
+    const savedMemos = JSON.parse(localStorage.getItem("savedMemos"));
+    const memo = savedMemos[index];
+    
+    // 선택된 메모의 제목, cut번호, 카테고리 내용 표시
+    document.getElementById("memoTitle").innerText = `タイトル: ${memo.title}`;
+    document.getElementById("memoCut").innerText = `cut番号: ${memo.cutNumber}`;
+
+    let memoDetailsDiv = document.getElementById("memoDetails");
+    memoDetailsDiv.innerHTML = ""; // 기존 내용을 초기화
+
+    Object.keys(memo.memoData).forEach(category => {
+      let categoryDiv = document.createElement("div");
+      categoryDiv.classList.add("category");
+      
+      let categoryLabel = document.createElement("label");
+      categoryLabel.textContent = category;
+      
+      let categoryTextarea = document.createElement("textarea");
+      categoryTextarea.value = memo.memoData[category];
+      categoryTextarea.readOnly = true;  // 수정 불가로 설정
+
+      categoryDiv.appendChild(categoryLabel);
+      categoryDiv.appendChild(categoryTextarea);
+
+      // 이미지 미리보기 (마지막 항목에만)
+      if (memo.memoData[`${category}_image`]) {
+        let imageDiv = document.createElement("div");
+        let img = document.createElement("img");
+        img.src = memo.memoData[`${category}_image`];
+        
+        // 이미지를 클릭하면 새 창으로 열리도록 설정
+        img.addEventListener("click", function() {
+          window.open(img.src, "_blank");
+        });
+        
+        imageDiv.appendChild(img);
+        categoryDiv.appendChild(imageDiv);
+      }
+
+      memoDetailsDiv.appendChild(categoryDiv);
+    });
+
+    document.getElementById("selectedMemoContent").style.display = "block"; // 선택된 메모 내용 표시
+  }
+
   // 편집 버튼 클릭 시 메모 내용 수정 가능하게 하기
   function editMemo(index) {
     const savedMemos = JSON.parse(localStorage.getItem("savedMemos"));
