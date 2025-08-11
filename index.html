@@ -6,6 +6,20 @@
   <title>메모장 프로그램</title>
   <style>
     body { font-family: Arial, sans-serif; }
+    
+    /* UI 스타일링 */
+    #inputSection {
+      padding: 20px;
+      background-color: #f4f4f4;
+      margin-bottom: 30px;
+    }
+    
+    #viewSection {
+      padding: 20px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+    }
+
     .category { margin: 20px 0; }
     .category input, .category textarea { width: 100%; padding: 10px; margin-bottom: 10px; }
     .button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
@@ -19,36 +33,45 @@
 
     /* 메모 리스트 텍스트 크기 절반으로 줄이기 */
     #savedMemoList li {
-      font-size: 16px;  /* 텍스트 크기를 절반으로 줄였습니다. */
+      font-size: 12px;
     }
+
+    /* 각 섹션의 스타일 */
+    h1 { text-align: center; }
   </style>
 </head>
 <body>
 
 <h1>メモ帳</h1>
 
-<!-- 제목과 커트번호 입력 -->
-<form id="cutForm">
-  <label for="title">話数:</label>
-  <input type="text" id="title" placeholder="話数を入力してください">
+<!-- 기입란 섹션 -->
+<div id="inputSection">
+  <h2>メモ作成</h2>
+
+  <form id="cutForm">
+    <label for="title">話数:</label>
+    <input type="text" id="title" placeholder="話数を入力してください">
+    
+    <label for="cutNumber">cut:</label>
+    <input type="text" id="cutNumber" placeholder="cutを入力してください">
+    
+    <button type="button" class="button" onclick="createCategories()">하위 카테고리 생성</button>
+  </form>
+
+  <!-- 하위 카테고리 메모 입력 -->
+  <div id="categories" style="display: none;"></div>
+</div>
+
+<!-- 열람란 섹션 -->
+<div id="viewSection">
+  <h2>メモリスト</h2>
   
-  <label for="cutNumber">cut:</label>
-  <input type="text" id="cutNumber" placeholder="cutを入力してください">
+  <!-- 정렬 버튼 -->
+  <button class="button" onclick="sortMemosByTitle()">タイトル順で並べ替え</button>
+  <button class="button" onclick="sortMemosByDate()">最新順で並べ替え</button>
   
-  <button type="button" class="button" onclick="createCategories()">하위 카테고리 생성</button>
-</form>
-
-<!-- 하위 카테고리 메모 입력 -->
-<div id="categories" style="display: none;"></div> <!-- 기본적으로 숨겨짐 -->
-
-<!-- 저장된 메모 검색 -->
-<h2>メモリスト</h2>
-
-<!-- 정렬 버튼 추가 -->
-<button class="button" onclick="sortMemosByTitle()">タイトル順で並べ替え</button>
-<button class="button" onclick="sortMemosByDate()">最新順で並べ替え</button>
-
-<ul id="savedMemoList"></ul>
+  <ul id="savedMemoList"></ul>
+</div>
 
 <script>
   // 커트번호에 맞는 카테고리 생성
