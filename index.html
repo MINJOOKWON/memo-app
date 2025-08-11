@@ -238,7 +238,7 @@
       listItem.innerHTML = `<strong>${memo.title} - cut ${memo.cutNumber}</strong> 
                             <button onclick="viewMemo(${index})">보기</button>
                             <button class="deleteButton" onclick="deleteMemo(${index})">削除</button>
-                            <button class="editButton" onclick="editMemo(${index})">編集</button>`;
+                            <button class="editButton" onclick="editMemo(${index})">編集</button>`; // 편집 버튼 추가
       savedMemoList.appendChild(listItem);
     });
   }
