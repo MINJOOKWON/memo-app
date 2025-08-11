@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>메모장 프로그램</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .category { margin: 20px 0; }
+    .category input, .category textarea { width: 100%; padding: 10px; margin-bottom: 10px; }
+    .button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+    .button:hover { background-color: #45a049; }
+  </style>
+</head>
+<body>
+
+<h1>메모장 프로그램</h1>
+<form id="cutForm">
+  <label for="title">제목:</label>
+  <input type="text" id="title" placeholder="제목을 입력하세요">
+  
+  <label for="cutNumber">커트 번호:</label>
+  <input type="text" id="cutNumber" placeholder="커트 번호를 입력하세요">
+  
+  <button type="button" class="button" onclick="createCategories()">하위 카테고리 생성</button>
+</form>
+
+<div id="categories"></div>
+
+<script>
+  function createCategories() {
+    const title = document.getElementById("title").value;
+    const cutNumber = document.getElementById("cutNumber").value;
+    const categories = [
+      "레이아웃의 취지", "렌즈의 길이", "아이레벨", "광원", "캐릭터", "소재의 구성", "카메라워크"
+    ];
+    
+    let categoriesDiv = document.getElementById("categories");
+    categoriesDiv.innerHTML = `<h2>${title} - 커트번호 ${cutNumber}</h2>`;
+    
+    categories.forEach(category => {
+      let categoryDiv = document.createElement("div");
+      categoryDiv.classList.add("category");
+      
+      let categoryLabel = document.createElement("label");
+      categoryLabel.textContent = category;
+      
+      let categoryTextarea = document.createElement("textarea");
+      categoryTextarea.placeholder = `메모를 입력하세요: ${category}`;
+      
+      categoryDiv.appendChild(categoryLabel);
+      categoryDiv.appendChild(categoryTextarea);
+      
+      categoriesDiv.appendChild(categoryDiv);
+    });
+  }
+</script>
+
+</body>
+</html>
