@@ -131,14 +131,17 @@
       }
     });
 
+    // 저장된 메모 리스트를 불러오기 (기존 저장된 메모가 있다면 불러옴)
     const savedMemos = JSON.parse(localStorage.getItem("savedMemos")) || [];
     savedMemos.push({ title, cutNumber, memoData });
 
     // 제목 순으로 정렬하여 저장
     savedMemos.sort((a, b) => a.title.localeCompare(b.title));
 
+    // localStorage에 저장
     localStorage.setItem("savedMemos", JSON.stringify(savedMemos));
 
+    // 저장 후 메모 리스트 갱신
     alert("保存されました!");
     loadSavedMemos();  // 저장된 메모 리스트 새로 고침
   }
@@ -149,6 +152,7 @@
     const savedMemoList = document.getElementById("savedMemoList");
     savedMemoList.innerHTML = "";  // 기존 리스트 초기화
 
+    // 저장된 메모가 있으면 화면에 리스트 표시
     savedMemos.forEach((memo, index) => {
       let listItem = document.createElement("li");
       listItem.innerHTML = `<strong>${memo.title} - cut ${memo.cutNumber}</strong> 
