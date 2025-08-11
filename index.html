@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>メモ帳</title>
+  <title>메모장 프로그램</title>
   <style>
     body { font-family: Arial, sans-serif; }
     .category { margin: 20px 0; }
@@ -15,28 +15,28 @@
     .deleteButton { background-color: #dc3545; }
     .deleteButton:hover { background-color: #c82333; }
     .image-preview { margin-top: 10px; }
-    .image-preview img { max-width: 100%; max-height: 200px; }
+    .image-preview img { max-width: 100%; max-height: 200px; cursor: pointer; }
   </style>
 </head>
 <body>
 
 <h1>メモ帳</h1>
 
-<!-- タイトル話数とcut番号 -->
+<!-- 제목과 커트번호 입력 -->
 <form id="cutForm">
   <label for="title">話数:</label>
-  <input type="text" id="title" placeholder="タイトルと話数を入力してください">
+  <input type="text" id="title" placeholder="話数を入力してください">
   
   <label for="cutNumber">cut:</label>
-  <input type="text" id="cutNumber" placeholder="cut番号を入力して下さい">
+  <input type="text" id="cutNumber" placeholder="cutを入力してください">
   
-  <button type="button" class="button" onclick="createCategories()">メモ生成</button>
+  <button type="button" class="button" onclick="createCategories()">하위 카테고리 생성</button>
 </form>
 
-<!-- Cut内容入力 -->
+<!-- 하위 카테고리 메모 입력 -->
 <div id="categories"></div>
 
-<!-- 検索 -->
+<!-- 저장된 메모 검색 -->
 <h2>メモリスト</h2>
 <ul id="savedMemoList"></ul>
 
@@ -50,7 +50,7 @@
     ];
     
     let categoriesDiv = document.getElementById("categories");
-    categoriesDiv.innerHTML = `<h2>${title} - cut番号 ${cutNumber}</h2>`;
+    categoriesDiv.innerHTML = `<h2>${title} - cut ${cutNumber}</h2>`;
     
     categories.forEach((category, index) => {
       let categoryDiv = document.createElement("div");
@@ -60,7 +60,7 @@
       categoryLabel.textContent = category;
       
       let categoryTextarea = document.createElement("textarea");
-      categoryTextarea.placeholder = `メモを入力してください: ${category}`;
+      categoryTextarea.placeholder = `メモ作成: ${category}`;
       
       // 이미지 첨부 입력 필드 추가 (마지막 항목에만)
       let imageInput = null;
@@ -105,6 +105,12 @@
     if (file) {
       let img = document.createElement("img");
       img.src = URL.createObjectURL(file);
+      
+      // 이미지를 클릭하면 새 창으로 열리도록 설정
+      img.addEventListener("click", function() {
+        window.open(img.src, "_blank");
+      });
+      
       imagePreviewDiv.appendChild(img);
     }
   }
@@ -145,7 +151,7 @@
 
     savedMemos.forEach((memo, index) => {
       let listItem = document.createElement("li");
-      listItem.innerHTML = `<strong>${memo.title} - 커트번호 ${memo.cutNumber}</strong> 
+      listItem.innerHTML = `<strong>${memo.title} - cut ${memo.cutNumber}</strong> 
                             <button onclick="viewMemo(${index})">보기</button>
                             <button class="deleteButton" onclick="deleteMemo(${index})">삭제</button>`;
       savedMemoList.appendChild(listItem);
@@ -157,7 +163,7 @@
     const savedMemos = JSON.parse(localStorage.getItem("savedMemos"));
     const memo = savedMemos[index];
     let categoriesDiv = document.getElementById("categories");
-    categoriesDiv.innerHTML = `<h2>${memo.title} - カット番号 ${memo.cutNumber}</h2>`;
+    categoriesDiv.innerHTML = `<h2>${memo.title} - cut ${memo.cutNumber}</h2>`;
     
     Object.keys(memo.memoData).forEach(category => {
       let categoryDiv = document.createElement("div");
@@ -178,6 +184,12 @@
         let imageDiv = document.createElement("div");
         let img = document.createElement("img");
         img.src = memo.memoData[`${category}_image`];
+        
+        // 이미지를 클릭하면 새 창으로 열리도록 설정
+        img.addEventListener("click", function() {
+          window.open(img.src, "_blank");
+        });
+        
         imageDiv.appendChild(img);
         categoryDiv.appendChild(imageDiv);
       }
@@ -193,7 +205,7 @@
 
     localStorage.setItem("savedMemos", JSON.stringify(savedMemos));
 
-    alert("削除されました!");
+    alert("メモが削除されました!");
     loadSavedMemos();  // 저장된 메모 리스트 새로 고침
   }
 
