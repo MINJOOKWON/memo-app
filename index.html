@@ -119,7 +119,7 @@
   function saveMemo(title, cutNumber, categories) {
     const memoData = {};
     categories.forEach((category, index) => {
-      const textarea = document.querySelector(`textarea[placeholder="メモを入力してください: ${category}"]`);
+      const textarea = document.querySelector(`textarea[placeholder="メモ作成: ${category}"]`);
       memoData[category] = textarea.value;
 
       // 이미지 파일 데이터 가져오기 (마지막 항목에만)
