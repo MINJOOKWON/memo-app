@@ -14,6 +14,8 @@
     .saveButton:hover { background-color: #0056b3; }
     .deleteButton { background-color: #dc3545; }
     .deleteButton:hover { background-color: #c82333; }
+    .image-preview { margin-top: 10px; }
+    .image-preview img { max-width: 100%; max-height: 200px; }
   </style>
 </head>
 <body>
@@ -60,8 +62,21 @@
       let categoryTextarea = document.createElement("textarea");
       categoryTextarea.placeholder = `메모를 입력하세요: ${category}`;
       
+      // 이미지 첨부 입력 필드 추가
+      let imageInput = document.createElement("input");
+      imageInput.type = "file";
+      imageInput.accept = "image/*";
+      imageInput.addEventListener("change", function(event) {
+        previewImage(event, category);
+      });
+      
+      let imagePreviewDiv = document.createElement("div");
+      imagePreviewDiv.classList.add("image-preview");
+      
       categoryDiv.appendChild(categoryLabel);
       categoryDiv.appendChild(categoryTextarea);
+      categoryDiv.appendChild(imageInput);
+      categoryDiv.appendChild(imagePreviewDiv);  // 이미지 미리보기 공간 추가
       
       categoriesDiv.appendChild(categoryDiv);
     });
@@ -76,12 +91,31 @@
     categoriesDiv.appendChild(saveButton);
   }
 
+  // 이미지 미리보기 함수
+  function previewImage(event, category) {
+    let imagePreviewDiv = event.target.parentElement.querySelector(".image-preview");
+    imagePreviewDiv.innerHTML = "";  // 기존 이미지 미리보기 내용 삭제
+
+    let file = event.target.files[0];
+    if (file) {
+      let img = document.createElement("img");
+      img.src = URL.createObjectURL(file);
+      imagePreviewDiv.appendChild(img);
+    }
+  }
+
   // 메모 저장
   function saveMemo(title, cutNumber, categories) {
     const memoData = {};
     categories.forEach(category => {
       const textarea = document.querySelector(`textarea[placeholder="메모를 입력하세요: ${category}"]`);
       memoData[category] = textarea.value;
+
+      // 이미지 파일 데이터 가져오기
+      const imageInput = document.querySelector(`input[type="file"]`);
+      if (imageInput && imageInput.files.length > 0) {
+        memoData[`${category}_image`] = URL.createObjectURL(imageInput.files[0]);
+      }
     });
 
     const savedMemos = JSON.parse(localStorage.getItem("savedMemos")) || [];
@@ -116,6 +150,9 @@
     categoriesDiv.innerHTML = `<h2>${memo.title} - 커트번호 ${memo.cutNumber}</h2>`;
     
     Object.keys(memo.memoData).forEach(category => {
+      if (category.includes("_image")) {
+        return; // 이미지 파일은 제외하고 진행
+      }
       let categoryDiv = document.createElement("div");
       categoryDiv.classList.add("category");
       
@@ -125,10 +162,19 @@
       let categoryTextarea = document.createElement("textarea");
       categoryTextarea.value = memo.memoData[category];
       categoryTextarea.readOnly = true;  // 수정 불가로 설정
-      
+
       categoryDiv.appendChild(categoryLabel);
       categoryDiv.appendChild(categoryTextarea);
-      
+
+      // 이미지 미리보기
+      if (memo.memoData[`${category}_image`]) {
+        let imageDiv = document.createElement("div");
+        let img = document.createElement("img");
+        img.src = memo.memoData[`${category}_image`];
+        imageDiv.appendChild(img);
+        categoryDiv.appendChild(imageDiv);
+      }
+
       categoriesDiv.appendChild(categoryDiv);
     });
   }
