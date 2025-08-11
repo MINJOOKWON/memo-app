@@ -6,15 +6,15 @@
   <title>메모장 프로그램</title>
   <style>
     body { font-family: Arial, sans-serif; }
-
+    
     /* 탭 스타일 */
     .tab {
-      display: flex;
-      cursor: pointer;
-      padding: 10px;
+      display: inline-block;
+      padding: 10px 20px;
       background-color: #f1f1f1;
+      cursor: pointer;
       border: 1px solid #ccc;
-      margin-bottom: 10px;
+      margin-right: 5px;
     }
     .tab.active {
       background-color: #ddd;
@@ -26,8 +26,11 @@
     }
     .tab-content.active {
       display: block;
+      margin-top: 20px;
     }
 
+    /* 각 섹션 스타일 */
+    h1 { text-align: center; }
     .category { margin: 20px 0; }
     .category input, .category textarea { width: 100%; padding: 10px; margin-bottom: 10px; }
     .button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
@@ -43,9 +46,6 @@
     #savedMemoList li {
       font-size: 12px;
     }
-
-    /* 각 섹션의 스타일 */
-    h1 { text-align: center; }
   </style>
 </head>
 <body>
