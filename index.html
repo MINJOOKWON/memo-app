@@ -80,6 +80,14 @@
   <button class="button" onclick="sortMemosByDate()">最新順で並べ替え</button>
   
   <ul id="savedMemoList"></ul>
+
+  <!-- 클릭한 메모의 내용 표기 -->
+  <div id="selectedMemoContent" style="margin-top: 20px;">
+    <h3>選択されたメモ</h3>
+    <div id="memoTitle"></div>
+    <div id="memoCut"></div>
+    <div id="memoDetails"></div>
+  </div>
 </div>
 
 <script>
@@ -255,6 +263,7 @@
   function viewMemo(index) {
     const savedMemos = JSON.parse(localStorage.getItem("savedMemos"));
     const memo = savedMemos[index];
+    
     // 메모를 클릭하면 `メモ作成` 화면으로 해당 메모를 표시
     document.getElementById("title").value = memo.title;
     document.getElementById("cutNumber").value = memo.cutNumber;
