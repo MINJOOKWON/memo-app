@@ -34,7 +34,7 @@
 </form>
 
 <!-- 하위 카테고리 메모 입력 -->
-<div id="categories"></div>
+<div id="categories" style="display: none;"></div> <!-- 기본적으로 숨겨짐 -->
 
 <!-- 저장된 메모 검색 -->
 <h2>メモリスト</h2>
@@ -85,7 +85,10 @@
       
       categoriesDiv.appendChild(categoryDiv);
     });
-    
+
+    // 하위 카테고리 작성란을 표시
+    categoriesDiv.style.display = 'block';
+
     // 저장 버튼 추가
     let saveButton = document.createElement("button");
     saveButton.textContent = "保存";
@@ -94,6 +97,10 @@
       saveMemo(title, cutNumber, categories);
     };
     categoriesDiv.appendChild(saveButton);
+
+    // 제목과 cut 입력란 초기화
+    document.getElementById("title").value = "";
+    document.getElementById("cutNumber").value = "";
   }
 
   // 이미지 미리보기 함수
