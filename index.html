@@ -81,7 +81,7 @@
   
   <ul id="savedMemoList"></ul>
 
-  <!-- 클릭한 메모의 내용 표기 -->
+  <!-- 선택된 메모 내용 표시 -->
   <div id="selectedMemoContent" style="margin-top: 20px;">
     <h3>選択されたメモ</h3>
     <div id="memoTitle"></div>
@@ -264,13 +264,13 @@
     const savedMemos = JSON.parse(localStorage.getItem("savedMemos"));
     const memo = savedMemos[index];
     
-    // 메모를 클릭하면 `メモ作成` 화면으로 해당 메모를 표시
-    document.getElementById("title").value = memo.title;
-    document.getElementById("cutNumber").value = memo.cutNumber;
+    // 선택된 메모의 제목, cut번호, 카테고리 내용 표시
+    document.getElementById("memoTitle").innerText = `タイトル: ${memo.title}`;
+    document.getElementById("memoCut").innerText = `cut番号: ${memo.cutNumber}`;
 
-    let categoriesDiv = document.getElementById("categories");
-    categoriesDiv.innerHTML = `<h2>${memo.title} - cut ${memo.cutNumber}</h2>`;
-    
+    let memoDetailsDiv = document.getElementById("memoDetails");
+    memoDetailsDiv.innerHTML = ""; // 기존 내용을 초기화
+
     Object.keys(memo.memoData).forEach(category => {
       let categoryDiv = document.createElement("div");
       categoryDiv.classList.add("category");
@@ -300,7 +300,7 @@
         categoryDiv.appendChild(imageDiv);
       }
 
-      categoriesDiv.appendChild(categoryDiv);
+      memoDetailsDiv.appendChild(categoryDiv);
     });
   }
 
