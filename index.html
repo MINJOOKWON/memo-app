@@ -6,18 +6,26 @@
   <title>메모장 프로그램</title>
   <style>
     body { font-family: Arial, sans-serif; }
-    
-    /* UI 스타일링 */
-    #inputSection {
-      padding: 20px;
-      background-color: #f4f4f4;
-      margin-bottom: 30px;
-    }
-    
-    #viewSection {
-      padding: 20px;
-      background-color: #fff;
+
+    /* 탭 스타일 */
+    .tab {
+      display: flex;
+      cursor: pointer;
+      padding: 10px;
+      background-color: #f1f1f1;
       border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+    .tab.active {
+      background-color: #ddd;
+    }
+
+    /* 각 탭 내용 */
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
     }
 
     .category { margin: 20px 0; }
@@ -44,10 +52,13 @@
 
 <h1>メモ帳</h1>
 
-<!-- 기입란 섹션 -->
-<div id="inputSection">
-  <h2>メモ作成</h2>
+<!-- 탭 메뉴 -->
+<div class="tab" id="tabCreate" onclick="switchTab('create')">メモ作成</div>
+<div class="tab" id="tabList" onclick="switchTab('list')">メモリスト</div>
 
+<!-- メモ作成 탭 콘텐츠 -->
+<div id="createTabContent" class="tab-content">
+  <h2>メモ作成</h2>
   <form id="cutForm">
     <label for="title">話数:</label>
     <input type="text" id="title" placeholder="話数を入力してください">
@@ -62,11 +73,9 @@
   <div id="categories" style="display: none;"></div>
 </div>
 
-<!-- 열람란 섹션 -->
-<div id="viewSection">
+<!-- メモリスト 탭 콘텐츠 -->
+<div id="listTabContent" class="tab-content">
   <h2>メモリスト</h2>
-  
-  <!-- 정렬 버튼 -->
   <button class="button" onclick="sortMemosByTitle()">タイトル順で並べ替え</button>
   <button class="button" onclick="sortMemosByDate()">最新順で並べ替え</button>
   
@@ -74,6 +83,30 @@
 </div>
 
 <script>
+  // 탭 전환 함수
+  function switchTab(tabName) {
+    // 모든 탭 내용을 숨김
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(content => {
+      content.classList.remove('active');
+    });
+
+    // 모든 탭 버튼의 'active' 클래스 제거
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.classList.remove('active');
+    });
+
+    // 클릭된 탭의 콘텐츠만 보이게 설정
+    if (tabName === 'create') {
+      document.getElementById('createTabContent').classList.add('active');
+      document.getElementById('tabCreate').classList.add('active');
+    } else if (tabName === 'list') {
+      document.getElementById('listTabContent').classList.add('active');
+      document.getElementById('tabList').classList.add('active');
+    }
+  }
+
   // 커트번호에 맞는 카테고리 생성
   function createCategories() {
     const title = document.getElementById("title").value;
@@ -272,6 +305,7 @@
   // 페이지 로드 시 저장된 메모 불러오기
   window.onload = function() {
     loadSavedMemos();
+    switchTab('create');  // 초기에는 메모 작성 화면을 표시
   };
 </script>
 
