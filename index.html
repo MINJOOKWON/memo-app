@@ -1,372 +1,450 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>메모장 프로그램</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>メモ帳</title>
   <style>
     body { font-family: Arial, sans-serif; }
-    
-    /* 탭 스타일 */
-    .tab {
-      display: inline-block;
-      padding: 10px 20px;
-      background-color: #f1f1f1;
-      cursor: pointer;
-      border: 1px solid #ccc;
-      margin-right: 5px;
-    }
-    .tab.active {
-      background-color: #ddd;
-    }
+    h1 { text-align:center; }
+    .tabs { display:flex; gap:8px; justify-content:center; margin:12px 0; }
+    .tab { padding:10px 16px; border:1px solid #ccc; background:#f1f1f1; cursor:pointer; }
+    .tab.active { background:#ddd; }
+    .tab-content { display:none; max-width:1000px; margin:0 auto; }
+    .tab-content.active { display:block; }
 
-    /* 각 탭 내용 */
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-      margin-top: 20px;
-    }
+    .category { margin: 16px 0; }
+    .category label { display:block; font-weight:bold; margin-bottom:6px; }
+    .category textarea { width:100%; min-height:70px; padding:8px; }
+    .button { padding:8px 14px; border:none; cursor:pointer; color:#fff; background:#4CAF50; }
+    .button:hover { filter:brightness(0.95); }
+    .saveButton { background:#007bff; }
+    .deleteButton { background:#dc3545; }
+    .editButton { background:#f39c12; }
+    .closeButton { background:#888; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
 
-    /* 각 섹션 스타일 */
-    h1 { text-align: center; }
-    .category { margin: 20px 0; }
-    .category input, .category textarea { width: 100%; padding: 10px; margin-bottom: 10px; }
-    .button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
-    .button:hover { background-color: #45a049; }
-    .saveButton { background-color: #007bff; }
-    .saveButton:hover { background-color: #0056b3; }
-    .deleteButton { background-color: #dc3545; }
-    .deleteButton:hover { background-color: #c82333; }
-    .editButton { background-color: #f39c12; }
-    .editButton:hover { background-color: #e67e22; }
-    .closeButton { background-color: #f1c40f; }
-    .closeButton:hover { background-color: #f39c12; }
-    .image-preview { margin-top: 10px; }
-    .image-preview img { max-width: 100%; max-height: 200px; cursor: pointer; }
+    #savedMemoList { list-style:none; padding-left:0; max-width:1000px; margin:0 auto; }
+    #savedMemoList li { font-size:12px; border-bottom:1px solid #eee; padding:10px 0; }
+    .memo-head { display:flex; gap:8px; align-items:center; justify-content:space-between; }
+    .memo-title { font-weight:bold; font-size:14px; }
+    .memo-actions .button { margin-left:6px; }
 
-    /* 메모 리스트 텍스트 크기 절반으로 줄이기 */
-    #savedMemoList li {
-      font-size: 12px;
-    }
+    .details { display:none; margin-top:10px; padding:12px; background:#fafafa; border:1px solid #e8e8e8; border-radius:6px; }
+    .details.visible { display:block; }
+    .image-preview img { max-width:100%; max-height:200px; cursor:pointer; display:block; margin:6px 0; }
+    .hint { color:#777; font-size:12px; }
+
+    /* 입력 섹션 */
+    #categories { margin-top:16px; }
+    #categories .image-preview img { max-width:100%; max-height:200px; cursor:pointer; }
   </style>
 </head>
 <body>
 
 <h1>メモ帳</h1>
 
-<!-- 탭 메뉴 -->
-<div class="tab" id="tabCreate" onclick="switchTab('create')">メモ作成</div>
-<div class="tab" id="tabList" onclick="switchTab('list')">メモリスト</div>
-
-<!-- メモ作成 탭 콘텐츠 -->
-<div id="createTabContent" class="tab-content">
-  <h2>メモ作成</h2>
-  <form id="cutForm">
-    <label for="title">話数:</label>
-    <input type="text" id="title" placeholder="話数を入力してください">
-    
-    <label for="cutNumber">cut:</label>
-    <input type="text" id="cutNumber" placeholder="cutを入力してください">
-    
-    <button type="button" class="button" onclick="createCategories()">하위 카테고리 생성</button>
-  </form>
-
-  <!-- 하위 카테고리 메모 입력 -->
-  <div id="categories" style="display: none;"></div>
+<div class="tabs">
+  <div class="tab active" id="tabCreate" onclick="switchTab('create')">メモ作成</div>
+  <div class="tab" id="tabList" onclick="switchTab('list')">メモリスト</div>
 </div>
 
-<!-- メモリスト 탭 콘텐츠 -->
-<div id="listTabContent" class="tab-content">
-  <h2>メモリスト</h2>
-  <button class="button" onclick="sortMemosByTitle()">タイトル順で並べ替え</button>
-  <button class="button" onclick="sortMemosByDate()">最新順で並べ替え</button>
-  
-  <ul id="savedMemoList"></ul>
+<!-- メモ作成 -->
+<div id="createTabContent" class="tab-content active">
+  <div style="max-width:1000px; margin:0 auto;">
+    <div class="row">
+      <div style="flex:1">
+        <label for="title">話数</label>
+        <input type="text" id="title" placeholder="話数を入力してください" style="width:100%; padding:8px"/>
+      </div>
+      <div style="flex:1">
+        <label for="cutNumber">cut</label>
+        <input type="text" id="cutNumber" placeholder="cutを入力してください" style="width:100%; padding:8px"/>
+      </div>
+      <div style="align-self:flex-end">
+        <button class="button" onclick="createCategories()">하위 카테고리 생성</button>
+      </div>
+    </div>
 
-  <!-- 선택된 메모 내용 표시 -->
-  <div id="selectedMemoContent" style="margin-top: 20px;">
-    <h3>選択されたメモ</h3>
-    <div id="memoTitle"></div>
-    <div id="memoCut"></div>
-    <div id="memoDetails"></div>
-    <button class="button closeButton" onclick="closeMemo()">閉じる</button>
-    <button class="button editButton" onclick="editMemo()">編集</button>
+    <div id="categories" style="display:none;"></div>
   </div>
 </div>
 
+<!-- メモリスト -->
+<div id="listTabContent" class="tab-content">
+  <div style="max-width:1000px; margin:0 auto;">
+    <div class="row" style="margin-bottom:10px;">
+      <button class="button" onclick="sortMemosByTitle()">タイトル順で並べ替え</button>
+      <button class="button" onclick="sortMemosByDate()">最新順で並べ替え</button>
+      <span class="hint">보기를 누르면 해당 항목 바로 아래에 내용이 펼쳐집니다.</span>
+    </div>
+  </div>
+  <ul id="savedMemoList"></ul>
+</div>
+
 <script>
-  let editingMemoIndex = null; // 편집 중인 메모의 인덱스를 추적
+  // --- 공통 카테고리 정의 ---
+  const CATEGORIES = [
+    "LOの趣旨", "レンズの長さ", "アイレベル", "光源", "キャラクター", "素材とカメラ", "参考資料"
+  ];
 
-  // 탭 전환 함수
+  // --- 유틸: 로컬스토리지 접근 ---
+  function getSavedMemos() {
+    try { return JSON.parse(localStorage.getItem("savedMemos")) || []; }
+    catch { return []; }
+  }
+  function setSavedMemos(memos) {
+    localStorage.setItem("savedMemos", JSON.stringify(memos));
+  }
+
+  // --- 탭 전환 ---
   function switchTab(tabName) {
-    const tabContents = document.querySelectorAll('.tab-content');
-    tabContents.forEach(content => {
-      content.classList.remove('active');
-    });
-
-    const tabs = document.querySelectorAll('.tab');
-    tabs.forEach(tab => {
-      tab.classList.remove('active');
-    });
-
-    if (tabName === 'create') {
-      document.getElementById('createTabContent').classList.add('active');
-      document.getElementById('tabCreate').classList.add('active');
-    } else if (tabName === 'list') {
-      document.getElementById('listTabContent').classList.add('active');
-      document.getElementById('tabList').classList.add('active');
-    }
+    document.getElementById('createTabContent').classList.toggle('active', tabName==='create');
+    document.getElementById('listTabContent').classList.toggle('active', tabName==='list');
+    document.getElementById('tabCreate').classList.toggle('active', tabName==='create');
+    document.getElementById('tabList').classList.toggle('active', tabName==='list');
+    if (tabName==='list') loadSavedMemos();
   }
 
-  // 커트번호에 맞는 카테고리 생성
+  // --- 파일 -> DataURL (이미지 영구 저장용) ---
+  function fileToDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = reject;
+      fr.readAsDataURL(file);
+    });
+  }
+
+  // --- メモ作成: 카테고리 폼 만들기 ---
   function createCategories() {
-    const title = document.getElementById("title").value;
-    const cutNumber = document.getElementById("cutNumber").value;
-    const categories = [
-      "LOの趣旨", "レンズの長さ", "アイレベル", "光源", "キャラクター", "素材とカメラ", "参考資料"
-    ];
-    
-    let categoriesDiv = document.getElementById("categories");
-    categoriesDiv.innerHTML = `<h2>${title} - cut ${cutNumber}</h2>`;
-    
-    categories.forEach((category, index) => {
-      let categoryDiv = document.createElement("div");
-      categoryDiv.classList.add("category");
-      
-      let categoryLabel = document.createElement("label");
-      categoryLabel.textContent = category;
-      
-      let categoryTextarea = document.createElement("textarea");
-      categoryTextarea.placeholder = `メモ作成: ${category}`;
-      
-      let imageInput = null;
-      if (index === categories.length - 1) {
-        imageInput = document.createElement("input");
-        imageInput.type = "file";
-        imageInput.accept = "image/*";
-        imageInput.addEventListener("change", function(event) {
-          previewImage(event, category);
-        });
-      }
-      
-      let imagePreviewDiv = document.createElement("div");
-      imagePreviewDiv.classList.add("image-preview");
-      
-      categoryDiv.appendChild(categoryLabel);
-      categoryDiv.appendChild(categoryTextarea);
-      if (imageInput) {
-        categoryDiv.appendChild(imageInput);
-        categoryDiv.appendChild(imagePreviewDiv);
-      }
-      
-      categoriesDiv.appendChild(categoryDiv);
+    const title = document.getElementById("title").value.trim();
+    const cutNumber = document.getElementById("cutNumber").value.trim();
+    if (!title || !cutNumber) { alert("話数 と cut を入力してください。"); return; }
+
+    const wrap = document.getElementById("categories");
+    wrap.innerHTML = `<h3>${title} - cut ${cutNumber}</h3>`;
+    CATEGORIES.forEach((cat, idx) => {
+      const div = document.createElement("div");
+      div.className = "category";
+      div.innerHTML = `
+        <label>${cat}</label>
+        <textarea placeholder="メモ作成: ${cat}"></textarea>
+        ${idx === CATEGORIES.length - 1 ? `
+          <input type="file" accept="image/*" onchange="previewCreateImage(event)" />
+          <div class="image-preview"></div>
+        ` : ``}
+      `;
+      wrap.appendChild(div);
     });
 
-    categoriesDiv.style.display = 'block';
+    const saveBtn = document.createElement("button");
+    saveBtn.textContent = "保存";
+    saveBtn.className = "button saveButton";
+    saveBtn.onclick = () => saveMemoFromCreate(title, cutNumber);
+    wrap.appendChild(saveBtn);
 
-    let saveButton = document.createElement("button");
-    saveButton.textContent = "保存";
-    saveButton.classList.add("button", "saveButton");
-    saveButton.onclick = function() {
-      saveMemo(title, cutNumber, categories);
-    };
-    categoriesDiv.appendChild(saveButton);
-
-    document.getElementById("title").value = "";
-    document.getElementById("cutNumber").value = "";
+    wrap.style.display = "block";
   }
 
-  // 이미지 미리보기 함수
-  function previewImage(event, category) {
-    let imagePreviewDiv = event.target.parentElement.querySelector(".image-preview");
-    imagePreviewDiv.innerHTML = "";
-    
-    let file = event.target.files[0];
-    if (file) {
-      let img = document.createElement("img");
-      img.src = URL.createObjectURL(file);
-      
-      img.addEventListener("click", function() {
-        window.open(img.src, "_blank");
-      });
-      
-      imagePreviewDiv.appendChild(img);
+  function previewCreateImage(e) {
+    const container = e.target.closest('.category').querySelector('.image-preview');
+    container.innerHTML = "";
+    const f = e.target.files?.[0];
+    if (f) {
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      img.onclick = () => window.open(img.src, "_blank");
+      container.appendChild(img);
     }
   }
 
-  // 메모 저장
-  function saveMemo(title, cutNumber, categories) {
+  // --- メモ作成: 저장 ---
+  async function saveMemoFromCreate(title, cutNumber) {
+    const wrap = document.getElementById("categories");
     const memoData = {};
-    categories.forEach((category, index) => {
-      const textarea = document.querySelector(`textarea[placeholder="メモ作成: ${category}"]`);
-      memoData[category] = textarea.value;
+    for (let i=0; i<CATEGORIES.length; i++) {
+      const cat = CATEGORIES[i];
+      const textarea = wrap.querySelector(`textarea[placeholder="メモ作成: ${CSS.escape(cat)}"]`);
+      memoData[cat] = textarea ? textarea.value : "";
 
-      if (index === categories.length - 1) {
-        const imageInput = document.querySelector(`input[type="file"]`);
-        if (imageInput && imageInput.files.length > 0) {
-          memoData[`${category}_image`] = URL.createObjectURL(imageInput.files[0]);
+      if (i === CATEGORIES.length - 1) {
+        const fileInput = wrap.querySelector('input[type="file"]');
+        if (fileInput && fileInput.files.length > 0) {
+          memoData[`${cat}_image`] = await fileToDataURL(fileInput.files[0]);
         }
       }
-    });
-
-    const savedMemos = JSON.parse(localStorage.getItem("savedMemos")) || [];
-    if (editingMemoIndex !== null) {
-      savedMemos[editingMemoIndex] = { title, cutNumber, memoData, date: new Date() };
-    } else {
-      savedMemos.push({ title, cutNumber, memoData, date: new Date() });
     }
 
-    savedMemos.sort((a, b) => a.title.localeCompare(b.title));
-    localStorage.setItem("savedMemos", JSON.stringify(savedMemos));
+    const saved = getSavedMemos();
+    saved.push({ title, cutNumber, memoData, date: new Date().toISOString() });
+    saved.sort((a,b)=> a.title.localeCompare(b.title));
+    setSavedMemos(saved);
 
     alert("保存されました!");
-    loadSavedMemos();
-
-    editingMemoIndex = null; // 편집 상태 초기화
+    // 입력 UI 초기화 (요청하신 동작)
+    document.getElementById("title").value = "";
+    document.getElementById("cutNumber").value = "";
+    wrap.innerHTML = "";
+    wrap.style.display = "none";
   }
 
-  // 저장된 메모 불러오기
+  // --- メモリスト 렌더링 ---
   function loadSavedMemos() {
-    const savedMemos = JSON.parse(localStorage.getItem("savedMemos")) || [];
-    const savedMemoList = document.getElementById("savedMemoList");
-    savedMemoList.innerHTML = "";
+    const list = document.getElementById("savedMemoList");
+    list.innerHTML = "";
+    const memos = getSavedMemos();
 
-    savedMemos.forEach((memo, index) => {
-      let listItem = document.createElement("li");
-      listItem.innerHTML = `<strong>${memo.title} - cut ${memo.cutNumber}</strong> 
-                            <button onclick="viewMemo(${index})">보기</button>
-                            <button class="deleteButton" onclick="deleteMemo(${index})">削除</button>
-                            <button class="editButton" onclick="editMemo(${index})">編集</button>`; // 편집 버튼 추가
-      savedMemoList.appendChild(listItem);
+    memos.forEach((m, idx) => {
+      const li = document.createElement('li');
+      li.id = `memo-${idx}`;
+
+      const head = document.createElement('div');
+      head.className = "memo-head";
+      head.innerHTML = `
+        <div class="memo-title">${m.title} - cut ${m.cutNumber}</div>
+        <div class="memo-actions">
+          <button class="button" onclick="toggleDetails(${idx})">보기</button>
+          <button class="button deleteButton" onclick="deleteMemo(${idx})">削除</button>
+        </div>
+      `;
+      li.appendChild(head);
+
+      const details = document.createElement('div');
+      details.className = "details";
+      details.id = `details-${idx}`;
+      li.appendChild(details);
+
+      document.getElementById("savedMemoList").appendChild(li);
     });
   }
 
-  // 메모 보기
-  function viewMemo(index) {
-    const savedMemos = JSON.parse(localStorage.getItem("savedMemos"));
-    const memo = savedMemos[index];
-    
-    // 선택된 메모의 제목, cut번호, 카테고리 내용 표시
-    document.getElementById("memoTitle").innerText = `タイトル: ${memo.title}`;
-    document.getElementById("memoCut").innerText = `cut番号: ${memo.cutNumber}`;
+  // --- 보기: 해당 항목 아래에 펼치기/접기 ---
+  function toggleDetails(index) {
+    const panel = document.getElementById(`details-${index}`);
+    if (panel.classList.contains('visible')) {
+      panel.classList.remove('visible'); // 일시 닫기
+      return;
+    }
+    renderDetailsView(index); // 내용 렌더 + 펼치기
+  }
 
-    let memoDetailsDiv = document.getElementById("memoDetails");
-    memoDetailsDiv.innerHTML = ""; // 기존 내용을 초기화
+  // --- 상세내용(보기 모드) 렌더 ---
+  function renderDetailsView(index) {
+    const memos = getSavedMemos();
+    const memo = memos[index];
+    const panel = document.getElementById(`details-${index}`);
+    panel.innerHTML = "";
 
-    Object.keys(memo.memoData).forEach(category => {
-      let categoryDiv = document.createElement("div");
-      categoryDiv.classList.add("category");
-      
-      let categoryLabel = document.createElement("label");
-      categoryLabel.textContent = category;
-      
-      let categoryTextarea = document.createElement("textarea");
-      categoryTextarea.value = memo.memoData[category];
-      categoryTextarea.readOnly = true;  // 수정 불가로 설정
+    const head = document.createElement('div');
+    head.className = "row";
+    head.innerHTML = `
+      <div><strong>タイトル:</strong> ${memo.title}</div>
+      <div><strong>cut番号:</strong> ${memo.cutNumber}</div>
+    `;
+    panel.appendChild(head);
 
-      categoryDiv.appendChild(categoryLabel);
-      categoryDiv.appendChild(categoryTextarea);
-
-      // 이미지 미리보기 (마지막 항목에만)
-      if (memo.memoData[`${category}_image`]) {
-        let imageDiv = document.createElement("div");
-        let img = document.createElement("img");
-        img.src = memo.memoData[`${category}_image`];
-        
-        // 이미지를 클릭하면 새 창으로 열리도록 설정
-        img.addEventListener("click", function() {
-          window.open(img.src, "_blank");
-        });
-        
-        imageDiv.appendChild(img);
-        categoryDiv.appendChild(imageDiv);
+    // 카테고리 표시
+    CATEGORIES.forEach(cat => {
+      const div = document.createElement('div');
+      div.className = "category";
+      const val = memo.memoData[cat] || "";
+      div.innerHTML = `
+        <label>${cat}</label>
+        <textarea readonly>${val}</textarea>
+      `;
+      // 마지막 항목 이미지
+      const imgData = memo.memoData[`${cat}_image`];
+      if (imgData) {
+        const imgWrap = document.createElement('div');
+        imgWrap.className = "image-preview";
+        const img = document.createElement('img');
+        img.src = imgData;
+        img.onclick = () => window.open(img.src, "_blank");
+        imgWrap.appendChild(img);
+        div.appendChild(imgWrap);
       }
-
-      memoDetailsDiv.appendChild(categoryDiv);
+      panel.appendChild(div);
     });
 
-    document.getElementById("selectedMemoContent").style.display = "block"; // 선택된 메모 내용 표시
+    // 하단 버튼들
+    const btns = document.createElement('div');
+    btns.className = "row";
+    btns.innerHTML = `
+      <button class="button closeButton" onclick="closeDetails(${index})">閉じる</button>
+      <button class="button editButton" onclick="renderDetailsEdit(${index})">編集</button>
+    `;
+    panel.appendChild(btns);
+
+    panel.classList.add('visible');
   }
 
-  // 편집 버튼 클릭 시 메모 내용 수정 가능하게 하기
-  function editMemo(index) {
-    const savedMemos = JSON.parse(localStorage.getItem("savedMemos"));
-    const memo = savedMemos[index];
-    editingMemoIndex = index; // 편집 중인 메모 인덱스 저장
+  function closeDetails(index) {
+    const panel = document.getElementById(`details-${index}`);
+    panel.classList.remove('visible'); // 일시 숨김 (삭제 아님)
+  }
 
-    document.getElementById("title").value = memo.title;
-    document.getElementById("cutNumber").value = memo.cutNumber;
-    
-    let categoriesDiv = document.getElementById("categories");
-    categoriesDiv.innerHTML = `<h2>${memo.title} - cut ${memo.cutNumber}</h2>`;
-    
-    Object.keys(memo.memoData).forEach((category, index) => {
-      let categoryDiv = document.createElement("div");
-      categoryDiv.classList.add("category");
+  // --- 상세내용(편집 모드) 렌더 ---
+  function renderDetailsEdit(index) {
+    const memos = getSavedMemos();
+    const memo = memos[index];
+    const panel = document.getElementById(`details-${index}`);
+    panel.innerHTML = "";
 
-      let categoryLabel = document.createElement("label");
-      categoryLabel.textContent = category;
+    const head = document.createElement('div');
+    head.className = "row";
+    head.innerHTML = `
+      <div><strong>タイトル:</strong> <input id="edit-title-${index}" value="${memo.title}" style="padding:6px"/></div>
+      <div><strong>cut番号:</strong> <input id="edit-cut-${index}" value="${memo.cutNumber}" style="padding:6px"/></div>
+    `;
+    panel.appendChild(head);
 
-      let categoryTextarea = document.createElement("textarea");
-      categoryTextarea.value = memo.memoData[category];
-      
-      let imagePreviewDiv = document.createElement("div");
-      imagePreviewDiv.classList.add("image-preview");
+    // 카테고리 편집 필드
+    CATEGORIES.forEach((cat, i) => {
+      const div = document.createElement('div');
+      div.className = "category";
+      const val = memo.memoData[cat] || "";
+      div.innerHTML = `
+        <label>${cat}</label>
+        <textarea id="edit-text-${index}-${i}">${val}</textarea>
+        ${i === CATEGORIES.length - 1 ? `
+          <div class="row">
+            <input type="file" id="edit-file-${index}" accept="image/*" />
+            <button class="button closeButton" type="button" onclick="removeEditImage(${index})">이미지 삭제</button>
+          </div>
+          <div id="edit-preview-${index}" class="image-preview"></div>
+        ` : ``}
+      `;
+      panel.appendChild(div);
+    });
 
-      if (memo.memoData[`${category}_image`]) {
-        let img = document.createElement("img");
-        img.src = memo.memoData[`${category}_image`];
-        imagePreviewDiv.appendChild(img);
+    // 현재 이미지 프리뷰
+    const lastCat = CATEGORIES[CATEGORIES.length - 1];
+    const curImg = memo.memoData[`${lastCat}_image`];
+    const preview = panel.querySelector(`#edit-preview-${index}`);
+    if (preview && curImg) {
+      const img = document.createElement('img');
+      img.src = curImg;
+      img.onclick = () => window.open(img.src, "_blank");
+      preview.appendChild(img);
+    }
 
-        // 이미지 삭제 버튼 추가
-        let deleteImageButton = document.createElement("button");
-        deleteImageButton.textContent = "이미지 삭제";
-        deleteImageButton.onclick = function() {
-          img.remove(); // 이미지 삭제
-          imagePreviewDiv.innerHTML = ""; // 이미지 미리보기 삭제
-        };
-        imagePreviewDiv.appendChild(deleteImageButton);
+    // 파일 변경 시 미리보기
+    const fileInput = panel.querySelector(`#edit-file-${index}`);
+    if (fileInput) {
+      fileInput.onchange = (e) => {
+        if (!preview) return;
+        preview.innerHTML = "";
+        const f = e.target.files?.[0];
+        if (f) {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(f);
+          img.onclick = () => window.open(img.src, "_blank");
+          preview.appendChild(img);
+        }
+      };
+    }
+
+    // 하단 버튼
+    const btns = document.createElement('div');
+    btns.className = "row";
+    btns.innerHTML = `
+      <button class="button saveButton" onclick="saveEdit(${index})">保存</button>
+      <button class="button closeButton" onclick="renderDetailsView(${index})">キャンセル</button>
+    `;
+    panel.appendChild(btns);
+
+    panel.classList.add('visible');
+    panel.dataset.removeImage = "false"; // 이미지 삭제 플래그 초기화
+  }
+
+  function removeEditImage(index) {
+    const panel = document.getElementById(`details-${index}`);
+    const preview = panel.querySelector(`#edit-preview-${index}`);
+    if (preview) preview.innerHTML = "";
+    const fileInput = panel.querySelector(`#edit-file-${index}`);
+    if (fileInput) fileInput.value = ""; // 선택 해제
+    panel.dataset.removeImage = "true";   // 삭제 플래그 설정
+  }
+
+  // --- 편집 저장 ---
+  async function saveEdit(index) {
+    const memos = getSavedMemos();
+    const memo = memos[index];
+
+    const newTitle = document.getElementById(`edit-title-${index}`).value.trim();
+    const newCut = document.getElementById(`edit-cut-${index}`).value.trim();
+    if (!newTitle || !newCut) { alert("タイトル と cut番号 は必須です。"); return; }
+
+    const newData = {};
+    for (let i=0; i<CATEGORIES.length; i++) {
+      const cat = CATEGORIES[i];
+      const ta = document.getElementById(`edit-text-${index}-${i}`);
+      newData[cat] = ta ? ta.value : "";
+    }
+
+    // 이미지 처리(마지막 항목)
+    const lastCat = CATEGORIES[CATEGORIES.length - 1];
+    const panel = document.getElementById(`details-${index}`);
+    const removeFlag = panel.dataset.removeImage === "true";
+    const fileInput = document.getElementById(`edit-file-${index}`);
+
+    if (removeFlag) {
+      // 완전 삭제
+      delete newData[`${lastCat}_image`];
+    } else if (fileInput && fileInput.files && fileInput.files.length > 0) {
+      newData[`${lastCat}_image`] = await fileToDataURL(fileInput.files[0]);
+    } else {
+      // 기존 이미지 유지
+      if (memo.memoData[`${lastCat}_image`]) {
+        newData[`${lastCat}_image`] = memo.memoData[`${lastCat}_image`];
       }
+    }
 
-      categoryDiv.appendChild(categoryLabel);
-      categoryDiv.appendChild(categoryTextarea);
-      categoryDiv.appendChild(imagePreviewDiv);
+    memos[index] = { title:newTitle, cutNumber:newCut, memoData:newData, date:new Date().toISOString() };
+    setSavedMemos(memos);
 
-      categoriesDiv.appendChild(categoryDiv);
-    });
-
-    let saveButton = document.createElement("button");
-    saveButton.textContent = "保存";
-    saveButton.classList.add("button", "saveButton");
-    saveButton.onclick = function() {
-      saveMemo(memo.title, memo.cutNumber, Object.keys(memo.memoData));
-    };
-    categoriesDiv.appendChild(saveButton);
+    alert("更新しました。");
+    // 저장 후 보기 모드로 다시 렌더
+    renderDetailsView(index);
+    // 헤더 표시도 갱신
+    const li = document.getElementById(`memo-${index}`);
+    if (li) {
+      const titleDiv = li.querySelector('.memo-title');
+      if (titleDiv) titleDiv.textContent = `${newTitle} - cut ${newCut}`;
+    }
   }
 
-  // 메모 삭제
-  function deleteMemo(index) {
-    const savedMemos = JSON.parse(localStorage.getItem("savedMemos"));
-    savedMemos.splice(index, 1);  // 해당 메모 삭제
-    localStorage.setItem("savedMemos", JSON.stringify(savedMemos));
-
-    alert("メモが削除されました!");
-    loadSavedMemos();  // 저장된 메모 리스트 새로 고침
-  }
-
-  // 메모 닫기 (閉じる 버튼)
-  function closeMemo() {
-    document.getElementById("selectedMemoContent").style.display = "none";
-  }
-
-  // 페이지 로드 시 저장된 메모 불러오기
-  window.onload = function() {
+  // --- 정렬 ---
+  function sortMemosByTitle() {
+    const memos = getSavedMemos();
+    memos.sort((a,b)=> a.title.localeCompare(b.title));
+    setSavedMemos(memos);
     loadSavedMemos();
-    switchTab('create');  // 초기에는 메모 작성 화면을 표시
+  }
+  function sortMemosByDate() {
+    const memos = getSavedMemos();
+    memos.sort((a,b)=> new Date(b.date) - new Date(a.date));
+    setSavedMemos(memos);
+    loadSavedMemos();
+  }
+
+  // --- 삭제 (자동 접힘) ---
+  function deleteMemo(index) {
+    const memos = getSavedMemos();
+    memos.splice(index, 1);
+    setSavedMemos(memos);
+    // 해당 li 제거
+    const li = document.getElementById(`memo-${index}`);
+    if (li && li.parentElement) li.parentElement.removeChild(li);
+    // 리스트 전체 재렌더(인덱스 재정렬)
+    loadSavedMemos();
+  }
+
+  // 초기 로드
+  window.onload = () => {
+    loadSavedMemos();
   };
 </script>
-
 </body>
 </html>
