@@ -255,6 +255,10 @@
   function viewMemo(index) {
     const savedMemos = JSON.parse(localStorage.getItem("savedMemos"));
     const memo = savedMemos[index];
+    // 메모를 클릭하면 `メモ作成` 화면으로 해당 메모를 표시
+    document.getElementById("title").value = memo.title;
+    document.getElementById("cutNumber").value = memo.cutNumber;
+
     let categoriesDiv = document.getElementById("categories");
     categoriesDiv.innerHTML = `<h2>${memo.title} - cut ${memo.cutNumber}</h2>`;
     
